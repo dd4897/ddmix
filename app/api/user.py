@@ -1,44 +1,37 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from app.schemas.user import User
 from typing import List
 from app.config.db import user_collection
 from bson import ObjectId
-from fastapi.encoders import jsonable_encoder
-
+import time,uuid
 router = APIRouter()
 
-# Pydantic 模型，用于请求与响应
-class User(BaseModel):
-    id: str = None
-    name: str
-    email: str
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "name": "John Doe",
-                "email": "johndoe@example.com"
-            }
-        }
 
 # 创建用户
 @router.post("/users/", response_description="Add new user", response_model=User)
 async def create_user(user: User) -> User:
-    user = jsonable_encoder(user)
-    new_user = await user_collection.insert_one(user)
-    created_user = await user_collection.find_one({"_id": new_user.inserted_id})
-    return created_user
-
+    user_data = user.dict(by_alias=True, exclude={"id"})
+    user_obj = await user_collection.insert_one(user_data)
+    created_user = await user_collection.find_one({"_id": user_obj.inserted_id})
+    if created_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    # 将 ObjectId 转换成字符串
+    created_user['_id'] = str(created_user['_id'])
+    # 这里我们直接返回 Pydantic 模型，它会处理 _id 到 id 的转换及序列化
+    return User(**created_user)
 # 获取所有用户
 @router.get("/users/", response_description="List all users", response_model=List[User])
 async def list_users():
     users = await user_collection.find().to_list(1000)
-    return [user for user in users]
-
+    # 手动转换 _id 从 ObjectId 到字符串
+    for user in users:
+        user["_id"] = str(user["_id"])
+    return users
 # 获取指定用户
 @router.get("/users/{id}", response_description="Get a single user", response_model=User)
 async def find_user(id: str):
     if (user := await user_collection.find_one({"_id": ObjectId(id)})) is not None:
+        user['_id'] = str(user['_id'])
         return user
     raise HTTPException(status_code=404, detail=f"User {id} not found")
 
@@ -46,7 +39,6 @@ async def find_user(id: str):
 @router.put("/users/{id}", response_description="Update a user", response_model=User)
 async def update_user(id: str, user: User):
     user = {k: v for k, v in user.dict().items() if v is not None}
-
     if len(user) >= 1:
         update_result = await user_collection.update_one({"_id": ObjectId(id)}, {"$set": user})
 
@@ -55,7 +47,6 @@ async def update_user(id: str, user: User):
                 updated_user := await user_collection.find_one({"_id": ObjectId(id)})
             ) is not None:
                 return updated_user
-
     if (existing_user := await user_collection.find_one({"_id": ObjectId(id)})) is not None:
         return existing_user
 

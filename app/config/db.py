@@ -3,6 +3,6 @@ from bson import ObjectId
 # MongoDB 配置
 MONGO_DETAILS = "mongodb://localhost:27017/ddmix"
 client = AsyncIOMotorClient(MONGO_DETAILS)
-database = client.users
+database = client.ddmix
 user_collection = database.get_collection("user")
 

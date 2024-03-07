@@ -14,7 +14,5 @@ def init_app(app: FastAPI()):
         allow_headers=["*"],  # 允许的请求头列表，这里使用通配符表示支持所有头部字段
     )
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
-    app.include_router(user_router, tags=['user'], prefix='/api/v1/user')
-
-
+    app.include_router(user_router, tags=['user'], prefix='/api/v1')
     return app
