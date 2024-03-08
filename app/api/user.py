@@ -40,6 +40,7 @@ async def update_user(id: str, user: User):
             if (
                 updated_user := await user_collection.find_one({"_id": ObjectId(id)})
             ) is not None:
+                updated_user['_id'] = str(update_user["_id"])
                 return updated_user
     if (existing_user := await user_collection.find_one({"_id": ObjectId(id)})) is not None:
         return existing_user
