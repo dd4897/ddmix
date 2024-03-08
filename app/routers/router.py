@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.config.config import STATIC,LOGPATH
 from app.api.user import router as user_router
+from app.api.conversation import router as conv_router
 import time,random,string
 import logging
 from app.config.db import client
@@ -11,9 +12,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 ch = logging.StreamHandler()
 fh = logging.FileHandler(filename=f'{LOGPATH}/server.log')
-formatter = logging.Formatter(
-    "%(asctime)s - %(module)s - %(funcName)s - line:%(lineno)d - %(levelname)s - %(message)s"
-)
+formatter = logging.Formatter("%(asctime)s - %(module)s - %(funcName)s - line:%(lineno)d - %(levelname)s - %(message)s")
 ch.setFormatter(formatter)
 fh.setFormatter(formatter)
 logger.addHandler(ch) #将日志输出至屏幕
@@ -30,6 +29,7 @@ def init_app(app: FastAPI()):
     )
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
     app.include_router(user_router, tags=['user'], prefix='/api/v1')
+    app.include_router(conv_router, tags=['conversation'], prefix='/api/v1')
     @app.on_event("startup")
     async def startup_db_client():
         print("mongodb已创建链接")
