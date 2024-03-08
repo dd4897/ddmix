@@ -1,15 +1,11 @@
 from pydantic import BaseModel,Field
 from typing import Optional
 from bson import ObjectId
-
-
-
 class User(BaseModel):
     id: Optional[str] = Field(None, alias="_id")
     username: str
     email: Optional[str] = None
     phone: int
-
     class Config:
         populate_by_name = True
         json_encoders = {

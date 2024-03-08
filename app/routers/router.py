@@ -6,6 +6,7 @@ from app.api.user import router as user_router
 import time,random,string
 import logging
 from app.config.db import client
+# Log config
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 ch = logging.StreamHandler()
@@ -37,7 +38,7 @@ def init_app(app: FastAPI()):
     async def shutdown_db_client():
         print("mongodb关闭链接")
         app.mongodb_client.close()
-    @app.middleware("http")
+    @app.middleware("http") # request中间件
     async def log_requests(request, call_next):
         idem = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
         logger.info(f"rid={idem} start request path={request.url.path}")
